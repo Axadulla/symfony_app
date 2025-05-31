@@ -26,3 +26,6 @@ EXPOSE 10000
 
 # Запускаем встроенный сервер PHP на порту 10000, корень — папка public
 CMD ["php", "-S", "0.0.0.0:10000", "-t", "public"]
+
+
+RUN composer install --no-dev --optimize-autoloader --no-scripts
