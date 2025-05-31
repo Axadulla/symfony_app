@@ -12,11 +12,14 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Создаем рабочую директорию
 WORKDIR /app
 
-# Копируем файлы composer.json и composer.lock
+# Копируем composer файлы (можно оставить, если хочешь кешировать зависимости)
 COPY composer.json composer.lock ./
 
 # Создаем пользователя appuser с домашней директорией
 RUN useradd -m appuser
+
+# Копируем весь исходный код **сразу после composer.json**
+COPY --chown=appuser:appuser . .
 
 # Даем права на рабочую директорию appuser
 RUN chown -R appuser:appuser /app
@@ -26,9 +29,6 @@ USER appuser
 
 # Устанавливаем зависимости composer без dev и с оптимизацией автозагрузчика
 RUN composer install --no-dev --optimize-autoloader
-
-# Копируем весь остальной код с нужными правами
-COPY --chown=appuser:appuser . .
 
 # Предварительно очищаем и греем кэш Symfony для prod окружения
 RUN php bin/console cache:clear --env=prod --no-debug
