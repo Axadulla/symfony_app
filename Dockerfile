@@ -1,41 +1,37 @@
-# Используем официальный PHP 8.2 CLI образ
-FROM php:8.2-cli
+# Используем официальный PHP образ с необходимыми расширениями (например, php8.2-fpm)
+FROM php:8.2-fpm
 
-# Устанавливаем системные зависимости и расширения для Symfony и PostgreSQL
+# Устанавливаем необходимые системные зависимости
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    unzip \
     git \
+    unzip \
+    libicu-dev \
+    libonig-dev \
+    libzip-dev \
     zip \
-    && docker-php-ext-install pdo_pgsql
+    curl \
+    && docker-php-ext-install intl mbstring zip pdo pdo_mysql
 
-# Копируем composer из официального образа composer
+# Устанавливаем Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Создаем пользователя с домашней директорией
-RUN useradd -m symfonyuser
-
-# Рабочая директория для приложения
+# Копируем файлы проекта в контейнер
 WORKDIR /app
+COPY . .
 
-# Копируем все файлы в контейнер
-COPY . /app
+# Устанавливаем переменные окружения для продакшена
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
 
-# Меняем владельца на нашего пользователя
-RUN chown -R symfonyuser:symfonyuser /app
+# Устанавливаем зависимости без dev-пакетов и без выполнения скриптов
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Переключаемся на пользователя
-USER symfonyuser
-
-# Устанавливаем зависимости composer без dev и с оптимизацией автозагрузчика
-RUN composer install --no-dev --optimize-autoloader
-
-# Кэшируем конфигурацию и роуты для Symfony (если у тебя есть такие скрипты)
+# Запускаем вручную необходимые post-install скрипты (очистка кэша и прочее)
 RUN php bin/console cache:clear --env=prod --no-debug
 RUN php bin/console cache:warmup --env=prod --no-debug
 
-# Открываем порт 10000 (или любой, который используешь)
-EXPOSE 10000
+# Открываем порт, который будет слушать PHP-FPM (обычно 9000)
+EXPOSE 9000
 
-# Команда запуска — встроенный PHP сервер, который слушает на 0.0.0.0:10000, корень — public
-CMD ["php", "-S", "0.0.0.0:10000", "-t", "public"]
+# Запускаем PHP-FPM сервер
+CMD ["php-fpm"]
