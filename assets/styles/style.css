@@ -1,0 +1,124 @@
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f8f9fa;
+    overflow: hidden;
+}
+
+.login-bg {
+    width: 50%;
+    background-image: url('../images/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.login-form-container {
+    width: 50%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 0 0 0 0.5rem;
+}
+
+
+
+
+.login-page {
+    display: flex;
+    padding: 0;
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+}
+
+
+
+
+
+h1 {
+    color: #2d6cdf;
+    font-weight: bold;
+}
+
+h3 {
+    margin-top: 10px;
+    color: #333;
+}
+
+
+.btn-primary {
+    background-color: #2d6cdf;
+    border-color: #2d6cdf;
+}
+
+.btn-primary:hover {
+    background-color: #254db0;
+    border-color: #254db0;
+}
+
+
+.form-control::placeholder {
+    color: #aaa;
+}
+
+/* Иконки */
+.input-group-text {
+    background-color: #f0f0f0;
+    border-left: none;
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+
+.form-check-input:checked {
+    background-color: #2d6cdf;
+    border-color: #2d6cdf;
+}
+
+
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+    font-size: 0.875rem;
+}
+
+
+a {
+    color: #2d6cdf;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+
+@media (max-width: 768px) {
+    .login-page {
+        flex-direction: column;
+    }
+    .login-bg {
+        display: none;
+    }
+    .login-form-container {
+        max-width: 100%;
+        padding: 2rem;
+    }
+}
+

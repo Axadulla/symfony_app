@@ -6,6 +6,18 @@
 parameters:
 
 services:
+    App\Twig\Extension\TimeExtensionRuntime:
+        autowire: true
+        autoconfigure: true
+
+    App\EventSubscriber\UserActivitySubscriber:
+        arguments:
+            $security: '@security.helper'
+            $entityManager: '@doctrine.orm.entity_manager'
+            $tokenStorage: '@security.token_storage'
+        tags:
+            - { name: kernel.event_subscriber }
+
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.

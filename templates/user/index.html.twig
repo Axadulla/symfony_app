@@ -1,0 +1,92 @@
+
+{% extends 'base.html.twig' %}
+
+{% block title %}User List{% endblock %}
+{% block body %}
+    <div class="container mt-5">
+        <h2 class="mb-4">User Management</h2>
+
+        <div class="mb-3">
+            <a href="{{ path('app_register') }}" class="btn">Register</a>
+            <a href="{{ path('app_login') }}" class="btn">Log in</a>
+        </div>
+
+        <form method="POST" action="{{ path('user_batch_action') }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('batch_action') }}">
+
+            <div class="mb-3">
+                <button type="submit" name="action" value="block" class="btn btn-warning me-2">Block</button>
+                <button type="submit" name="action" value="unblock" class="btn btn-success me-2">Unblock</button>
+                <button type="submit" name="action" value="delete" class="btn btn-danger"
+                        onclick="return confirm('Are you sure you want to delete selected users?');">Delete</button>
+            </div>
+
+            <table class="table table-hover align-middle shadow-sm">
+                <thead class="table-light">
+                <tr>
+                    <th><input type="checkbox" id="select-all"></th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Last seen</th>
+                    <th>Activity</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>
+                            <input type="checkbox" name="user_ids[]" value="{{ user.id }}" class="user-checkbox">
+                        </td>
+                        <td>
+                            {% if user.isBlocked %}
+                                <span class="text-decoration-line-through text-muted">{{ user.name }}</span>
+                            {% else %}
+                                {{ user.name }}
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">{{ user.title ?? 'Uz' }}</small>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            {% if user.lastSeen %}
+                                <span data-bs-toggle="tooltip" title="{{ user.lastSeen|date('F d, Y H:i:s') }}">
+                                {{ user.lastSeen|ago }}
+                            </span>
+                            {% else %}
+                                Never
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                {% for i in 0..6 %}
+                                    <div style="width: 6px; height: {{ random([10, 20, 30, 40]) }}px; background-color: #87b4f8; border-radius: 2px;"></div>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No users found.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('select-all').addEventListener('change', function() {
+            const checked = this.checked;
+            document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = checked);
+        });
+    </script>
+
+    <script>
+        // Bootstrap tooltips init
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        tooltipTriggerList.forEach(t => new bootstrap.Tooltip(t))
+    </script>
+
+
+{% endblock %}
