@@ -1,24 +1,28 @@
 FROM php:8.2-cli
 
-RUN apt-get update && apt-get install -y git unzip libzip-dev libicu-dev libonig-dev libxml2-dev zip \
-    && docker-php-ext-install intl pdo pdo_mysql zip opcache
+# Установка зависимостей системы, PHP-расширений и composer
+RUN apt-get update && apt-get install -y unzip git zip libzip-dev \
+    && docker-php-ext-install zip pdo pdo_mysql
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Создаем пользователя для работы с приложением
+RUN useradd -m appuser
+
 WORKDIR /app
 
-# Копируем только файлы composer, чтобы кешировать установку зависимостей
-COPY composer.json composer.lock ./
+# Копируем composer.json и composer.lock с нужными правами
+COPY --chown=appuser:appuser composer.json composer.lock ./
+
+# Переключаемся на appuser
+USER appuser
 
 RUN composer install --no-dev --optimize-autoloader
 
-# Теперь копируем остальной код
-COPY . .
+# Копируем остальной код тоже с правами appuser
+COPY --chown=appuser:appuser . .
 
-# Проверим, что symfony/runtime установлен
-RUN ls -la vendor/symfony/runtime
-
-# Кэшируем
+# Очистка и прогрев кэша
 RUN php bin/console cache:clear --env=prod --no-debug
 RUN php bin/console cache:warmup --env=prod --no-debug
 
