@@ -1,28 +1,23 @@
-# Используем официальный образ PHP с необходимыми расширениями
+# Используем официальный PHP CLI образ с нужными расширениями
 FROM php:8.2-cli
 
-# Устанавливаем зависимости для Symfony и composer
+# Устанавливаем системные зависимости и расширения PHP
 RUN apt-get update && apt-get install -y \
     git unzip zip libicu-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install intl pdo pdo_mysql mbstring xml opcache
+    && docker-php-ext-install intl pdo pdo_mysql mbstring xml opcache \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Устанавливаем Composer глобально
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Создаем рабочую директорию
+# Создаём рабочую директорию
 WORKDIR /app
 
-# Копируем composer файлы (можно оставить, если хочешь кешировать зависимости)
-COPY composer.json composer.lock ./
-
-# Создаем пользователя appuser с домашней директорией
+# Создаём пользователя appuser (без пароля) и задаём права
 RUN useradd -m appuser
 
-# Копируем весь исходный код **сразу после composer.json**
+# Копируем весь исходный код проекта с нужными правами сразу
 COPY --chown=appuser:appuser . .
-
-# Даем права на рабочую директорию appuser
-RUN chown -R appuser:appuser /app
 
 # Переключаемся на пользователя appuser
 USER appuser
@@ -30,12 +25,12 @@ USER appuser
 # Устанавливаем зависимости composer без dev и с оптимизацией автозагрузчика
 RUN composer install --no-dev --optimize-autoloader
 
-# Предварительно очищаем и греем кэш Symfony для prod окружения
+# Очищаем и греем кеш Symfony для продакшен окружения
 RUN php bin/console cache:clear --env=prod --no-debug
 RUN php bin/console cache:warmup --env=prod --no-debug
 
-# Опционально: выставляем права на var папку
+# Опционально: выставляем права для папки var (если нужно)
 RUN chmod -R 777 var
 
-# Запускаем приложение (замени на свой CMD или ENTRYPOINT)
+# Команда запуска (замени под своё приложение)
 CMD ["php", "bin/console", "server:run", "0.0.0.0:8000"]
