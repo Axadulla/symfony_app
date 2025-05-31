@@ -1,37 +1,41 @@
-# Используем официальный PHP образ с необходимыми расширениями (например, php8.2-fpm)
-FROM php:8.2-fpm
+# Используем официальный PHP образ с необходимыми расширениями
+FROM php:8.2-cli
 
-# Устанавливаем необходимые системные зависимости
+# Устанавливаем системные зависимости и расширения PHP, нужные для Symfony и Doctrine
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
+    libzip-dev \
     libicu-dev \
     libonig-dev \
-    libzip-dev \
+    libxml2-dev \
     zip \
-    curl \
-    && docker-php-ext-install intl mbstring zip pdo pdo_mysql
+    && docker-php-ext-install intl pdo pdo_mysql zip opcache
 
-# Устанавливаем Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Устанавливаем composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Копируем файлы проекта в контейнер
+# Создаем рабочую директорию
 WORKDIR /app
-COPY . .
 
-# Устанавливаем переменные окружения для продакшена
-ENV APP_ENV=prod
-ENV APP_DEBUG=0
+# Копируем composer файлы сначала (для кэширования слоев)
+COPY composer.json composer.lock ./
 
-# Устанавливаем зависимости без dev-пакетов и без выполнения скриптов
+# Устанавливаем зависимости без dev, без автозагрузки и без скриптов
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Запускаем вручную необходимые post-install скрипты (очистка кэша и прочее)
+# Копируем всё приложение в контейнер
+COPY . .
+
+# Устанавливаем symfony/runtime (обязательно для Symfony 6+)
+RUN composer require symfony/runtime --no-interaction --no-progress --no-scripts
+
+# Запускаем post-install скрипты вручную (кэш)
 RUN php bin/console cache:clear --env=prod --no-debug
 RUN php bin/console cache:warmup --env=prod --no-debug
 
-# Открываем порт, который будет слушать PHP-FPM (обычно 9000)
-EXPOSE 9000
+# Открываем порт (если нужен встроенный сервер PHP)
+EXPOSE 8000
 
-# Запускаем PHP-FPM сервер
-CMD ["php-fpm"]
+# Команда по умолчанию (запуск PHP сервера Symfony)
+CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
